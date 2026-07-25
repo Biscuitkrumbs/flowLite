@@ -229,3 +229,49 @@ dialog::backdrop { background: rgba(18,27,21,.55); backdrop-filter: blur(3px); }
   .pulse-row strong { font-size: 1rem; }
   .pulse-row small { min-width: 32px; padding: 2px 4px; font-size: .44rem; }
 }
+
+/* QR cage label generator */
+.header-actions { display: flex; align-items: center; gap: 9px; }
+.qr-button-icon { width: 20px; height: 20px; display: block; border: 3px solid var(--brand); border-radius: 2px; background:
+  linear-gradient(var(--brand),var(--brand)) 2px 2px / 4px 4px no-repeat,
+  linear-gradient(var(--brand),var(--brand)) 11px 2px / 4px 4px no-repeat,
+  linear-gradient(var(--brand),var(--brand)) 2px 11px / 4px 4px no-repeat,
+  linear-gradient(var(--brand),var(--brand)) 10px 10px / 3px 3px no-repeat,
+  linear-gradient(var(--brand),var(--brand)) 15px 14px / 3px 3px no-repeat;
+}
+.qr-labels-toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+.qr-generator-card { display: grid; grid-template-columns: 1fr minmax(260px, 360px); gap: 28px; align-items: start; }
+.qr-help { max-width: 580px; margin: 12px 0 0; line-height: 1.55; }
+.qr-generator-controls .field-label:first-child { margin-top: 0; }
+.qr-generator-controls .primary-button { width: 100%; margin-top: 14px; }
+.qr-labels-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 16px; margin-top: 16px; }
+.qr-label { break-inside: avoid; overflow: hidden; border: 2px solid #17211a; border-radius: 18px; background: #fff; padding: 15px; text-align: center; }
+.qr-label-brand { display: flex; justify-content: center; align-items: center; gap: 7px; margin-bottom: 10px; color: var(--brand); text-transform: uppercase; }
+.qr-label-brand strong { font-size: .75rem; letter-spacing: .16em; }
+.qr-label-brand span { padding: 2px 6px; border: 1px solid #cfd6d1; border-radius: 999px; background: #eef1ef; color: #667069; font-size: .55rem; font-weight: 800; letter-spacing: .04em; text-transform: none; }
+.qr-image-wrap { width: min(100%, 190px); aspect-ratio: 1; margin: 0 auto; display: grid; place-items: center; }
+.qr-image-wrap img { display: block; width: 100%; height: 100%; object-fit: contain; image-rendering: pixelated; }
+.qr-unavailable { color: var(--danger); font-size: .8rem; }
+.qr-cage-id { margin-top: 8px; color: #111; font-size: 2rem; line-height: 1; font-weight: 950; letter-spacing: .02em; }
+.qr-label-type { margin-top: 6px; color: #4e5751; font-size: .66rem; font-weight: 900; letter-spacing: .2em; }
+
+@media (max-width: 620px) {
+  .qr-generator-card { grid-template-columns: 1fr; gap: 18px; }
+  .qr-labels-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px; }
+  .qr-label { padding: 9px; border-radius: 12px; }
+  .qr-cage-id { font-size: 1.35rem; }
+}
+
+@media print {
+  @page { margin: 8mm; }
+  body { background: #fff !important; }
+  .app-header, .no-print, .toast, dialog { display: none !important; }
+  .shell { max-width: none; margin: 0; padding: 0; }
+  .view { display: none !important; }
+  #qrLabelsView { display: block !important; }
+  .qr-labels-grid { grid-template-columns: repeat(3, 1fr); gap: 5mm; margin: 0; }
+  .qr-label { border: 1.5px solid #000; border-radius: 4mm; padding: 4mm; page-break-inside: avoid; }
+  .qr-image-wrap { width: 44mm; }
+  .qr-cage-id { font-size: 18pt; }
+  .qr-label-brand strong { color: #000; }
+}

@@ -5,7 +5,7 @@ const STORAGE_KEY = "flowLiteDataV2";
 const RECENT_KEY = "flowLiteRecentV1";
 const STALE_MS = 24 * 60 * 60 * 1000;
 const $ = (id) => document.getElementById(id);
-const views = ["lookupView", "cageView", "dashboardView"];
+const views = ["lookupView", "cageView", "dashboardView", "qrLabelsView"];
 let currentCageId = null;
 
 // -----------------------------------------------------------------------------
@@ -269,6 +269,22 @@ function normaliseTypedCageId(value) {
   return toInternalCageId(match[1].padStart(3, "0"));
 }
 
+function openCageFromDeepLink(payload) {
+  const cageId = normaliseTypedCageId(payload);
+
+  if (!cageId) {
+    showLookupError(CONFIG.messages.invalidCageCode);
+    return;
+  }
+
+  if (!cageExists(cageId)) {
+    data.cages.push({ id: cageId, active: true });
+    saveData();
+  }
+
+  displayCage(cageId);
+}
+
 function openCageFromInput(payload) {
   const typedCageId = normaliseTypedCageId(payload);
 
@@ -420,6 +436,13 @@ $("dashboardButton").addEventListener("click", () => {
   renderDashboard(); showView("dashboardView");
 });
 $("dashboardBackButton").addEventListener("click", () => showView("lookupView"));
+$("qrLabelsButton").addEventListener("click", () => {
+  showView("qrLabelsView");
+  renderQrLabels();
+});
+$("qrLabelsBackButton").addEventListener("click", () => showView("lookupView"));
+$("generateQrLabelsButton").addEventListener("click", renderQrLabels);
+$("printQrLabelsButton").addEventListener("click", () => window.print());
 $("packedButton").addEventListener("click", () => act("packed", "Packing complete recorded"));
 $("workedButton").addEventListener("click", () => act("worked", "Being worked recorded"));
 $("emptyButton").addEventListener("click", () => act("empty", "Cage cycle closed"));
@@ -446,14 +469,13 @@ setInterval(() => {
 // -----------------------------------------------------------------------------
 // Application startup
 // -----------------------------------------------------------------------------
-const params = new URLSearchParams(location.search);
-
-const qrFromUrl = params.get("qr");
+const startupParams = new URLSearchParams(location.search);
+const cageFromUrl = startupParams.get("cage");
 
 applyBranding();
 renderRecent();
 saveData();
 
-if (qrFromUrl) {
-  openCageFromInput(qrFromUrl);
+if (cageFromUrl) {
+  openCageFromDeepLink(cageFromUrl);
 }

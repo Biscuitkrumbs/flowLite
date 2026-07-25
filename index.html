@@ -16,9 +16,14 @@
       </div>
       <h1 id="pageTitle"></h1>
     </div>
-    <button id="dashboardButton" class="icon-button" type="button" aria-label="Open instrument panel" title="Instrument panel">
-      <span class="panel-icon" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
-    </button>
+    <div class="header-actions">
+      <button id="qrLabelsButton" class="icon-button" type="button" aria-label="Create QR cage labels" title="QR labels">
+        <span class="qr-button-icon" aria-hidden="true"></span>
+      </button>
+      <button id="dashboardButton" class="icon-button" type="button" aria-label="Open instrument panel" title="Instrument panel">
+        <span class="panel-icon" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+      </button>
+    </div>
   </header>
 
   <main class="shell">
@@ -71,6 +76,31 @@
 
         <button id="detailsButton" class="details-button" type="button">Additional information</button>
       </div>
+    </section>
+
+    <section id="qrLabelsView" class="view qr-labels-view">
+      <div class="qr-labels-toolbar no-print">
+        <button id="qrLabelsBackButton" class="back-button" type="button">← Back</button>
+        <button id="printQrLabelsButton" class="primary-button" type="button">Print labels</button>
+      </div>
+
+      <div class="card qr-generator-card no-print">
+        <div>
+          <p class="eyebrow">LABEL GENERATOR</p>
+          <h2>Cage QR labels</h2>
+          <p class="muted qr-help">Each QR opens Flow directly on that cage. The large cage ID remains readable without scanning.</p>
+        </div>
+        <div class="qr-generator-controls">
+          <label class="field-label" for="qrStartInput">Starting cage</label>
+          <input id="qrStartInput" value="RC-001" inputmode="numeric" autocomplete="off">
+          <label class="field-label" for="qrCountInput">Number of labels</label>
+          <input id="qrCountInput" value="5" type="number" min="1" max="100">
+          <button id="generateQrLabelsButton" class="primary-button" type="button">Generate labels</button>
+          <p id="qrLabelsError" class="error" role="alert"></p>
+        </div>
+      </div>
+
+      <div id="qrLabelsGrid" class="qr-labels-grid" aria-live="polite"></div>
     </section>
 
     <section id="dashboardView" class="view dashboard-view">
@@ -183,7 +213,9 @@
 
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
   <script src="./js/config.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
   <script src="./js/qr.js"></script>
+  <script src="./js/qr-labels.js"></script>
   <script src="./js/ui.js"></script>
   <script src="./js/dashboard.js"></script>
   <script src="./js/app.js"></script>
