@@ -177,3 +177,18 @@ window.addEventListener("resize",()=>{if($("dashboardView").classList.contains("
 setInterval(()=>{if($("dashboardView").classList.contains("active"))renderDashboard();},60000);
 
 const params=new URLSearchParams(location.search);const cageFromUrl=params.get("cage");renderRecent();saveData();if(cageFromUrl)openCage(cageFromUrl);
+
+
+// Test API call 
+async function testAPI() {
+
+    const cage = await FlowAPI.createCage({
+        displayName: "Receiving Cage 1",
+        department: "Builders"
+    });
+
+    console.log(cage);
+
+}
+
+testAPI();
