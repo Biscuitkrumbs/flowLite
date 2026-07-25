@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#17231c" />
+  <title>Flow Lite</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="app-header">
+    <div>
+      <p class="eyebrow">FLOW LITE</p>
+      <h1 id="pageTitle">Cage Flow</h1>
+    </div>
+    <button id="dashboardButton" class="icon-button" type="button" aria-label="Open instrument panel" title="Instrument panel">
+      <span class="panel-icon" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+    </button>
+  </header>
+
+  <main class="shell">
+    <section id="lookupView" class="view active">
+      <div class="card hero-card">
+        <p class="muted">Scan a cage QR or enter its number</p>
+        <label class="field-label" for="cageInput">Cage number</label>
+        <div class="lookup-row">
+          <input id="cageInput" inputmode="numeric" autocomplete="off" placeholder="e.g. 27" />
+          <button id="openCageButton" class="primary-button" type="button">Open</button>
+        </div>
+        <p id="lookupError" class="error" role="alert"></p>
+      </div>
+
+      <div class="card compact-card">
+        <h2>Recent cages</h2>
+        <div id="recentCages" class="chip-row"></div>
+      </div>
+    </section>
+
+    <section id="cageView" class="view">
+      <button id="backButton" class="back-button" type="button">← All cages</button>
+
+      <div class="card cage-card">
+        <div class="cage-heading">
+          <div>
+            <p class="eyebrow">ROLL CAGE</p>
+            <h2 id="cageName">RC-027</h2>
+          </div>
+          <span id="statusPill" class="status-pill">First seen</span>
+        </div>
+
+        <p id="statusText" class="status-text"></p>
+        <p id="cycleMeta" class="muted"></p>
+
+        <div id="normalActions" class="action-stack">
+          <button id="packedButton" class="action-button" type="button"><span>📦</span><strong>Packing complete</strong></button>
+          <button id="workedButton" class="action-button" type="button"><span>🚶</span><strong>Being worked</strong></button>
+          <button id="emptyButton" class="action-button success" type="button"><span>✓</span><strong>Empty</strong></button>
+          <button id="attentionButton" class="action-button warning" type="button"><span>!</span><strong>Needs attention</strong></button>
+        </div>
+
+        <div id="recoveryActions" class="action-stack hidden">
+          <p class="recovery-note">This cage has not been updated for more than 24 hours.</p>
+          <button id="extendButton" class="action-button" type="button"><strong>Extend</strong></button>
+          <button id="recoveryEmptyButton" class="action-button success" type="button"><strong>Empty</strong></button>
+          <button id="newLoadButton" class="action-button" type="button"><strong>New load</strong></button>
+          <button id="recoveryAttentionButton" class="action-button warning" type="button"><strong>Needs attention</strong></button>
+        </div>
+
+        <button id="detailsButton" class="details-button" type="button">Additional information</button>
+      </div>
+    </section>
+
+    <section id="dashboardView" class="view dashboard-view">
+      <div class="panel-toolbar">
+        <button id="dashboardBackButton" class="back-button" type="button">← Back</button>
+        <div class="live-indicator"><span></span> Live view</div>
+      </div>
+
+      <div class="instrument-panel" aria-label="Flow instrument panel">
+        <button class="instrument hero-instrument" data-detail="status" type="button">
+          <div class="instrument-heading">
+            <span>Flow status</span>
+            <span id="statusComparison" class="comparison">Live</span>
+          </div>
+          <div class="hero-content">
+            <div>
+              <div id="flowStatus" class="flow-status">Flowing</div>
+              <p id="flowSummary">Work is moving normally.</p>
+            </div>
+            <div id="flowLane" class="flow-lane" aria-hidden="true"></div>
+          </div>
+          <div class="hero-metrics">
+            <span><strong id="activeCount">0</strong> active</span>
+            <span><strong id="openedToday">0</strong> opened</span>
+            <span><strong id="completedToday">0</strong> complete</span>
+          </div>
+        </button>
+
+        <button class="instrument workload-instrument" data-detail="active" type="button">
+          <div class="instrument-heading"><span>Workload</span><span id="workloadLabel" class="comparison">Normal</span></div>
+          <div class="workload-layout">
+            <div><strong id="workloadNumber" class="large-number">0</strong><small>active cages</small></div>
+            <div id="cageBlocks" class="cage-blocks" aria-hidden="true"></div>
+          </div>
+        </button>
+
+        <button class="instrument cycle-instrument" data-detail="cycle" type="button">
+          <div class="instrument-heading"><span>Average cycle</span><span id="cycleComparison" class="comparison">Today</span></div>
+          <div class="ring-wrap">
+            <svg class="cycle-ring" viewBox="0 0 120 120" role="img" aria-label="Average cycle gauge">
+              <circle class="ring-track" cx="60" cy="60" r="48"></circle>
+              <circle id="cycleRing" class="ring-value" cx="60" cy="60" r="48"></circle>
+            </svg>
+            <div class="ring-label"><strong id="averageCycle">—</strong><span id="cycleUnit">min</span></div>
+          </div>
+        </button>
+
+        <button class="instrument attention-instrument" data-detail="attention" type="button">
+          <div class="instrument-heading"><span>Attention</span><span id="attentionBadge" class="attention-badge">Clear</span></div>
+          <div class="attention-grid">
+            <div><strong id="over24Count">0</strong><span>over 24h</span></div>
+            <div><strong id="attentionCount">0</strong><span>issues today</span></div>
+          </div>
+          <div id="ageDots" class="age-dots" aria-hidden="true"></div>
+        </button>
+
+        <button class="instrument friction-instrument" data-detail="friction" type="button">
+          <div class="instrument-heading"><span>Friction today</span><span id="frictionTotal" class="comparison">0 events</span></div>
+          <div id="frictionBars" class="friction-bars"></div>
+        </button>
+
+        <button class="instrument activity-instrument" data-detail="activity" type="button">
+          <div class="instrument-heading"><span>Movement today</span><span id="movementComparison" class="comparison">Hourly</span></div>
+          <div id="activityBars" class="activity-bars" aria-label="Hourly completed cage activity"></div>
+          <div class="activity-caption"><span>Earlier</span><span>Now</span></div>
+        </button>
+      </div>
+    </section>
+  </main>
+
+  <dialog id="detailsDialog">
+    <form method="dialog" class="dialog-card">
+      <div class="section-heading"><h2>Additional information</h2><button class="icon-button" value="cancel" aria-label="Close">×</button></div>
+      <label class="field-label" for="departmentInput">Department</label>
+      <select id="departmentInput"><option value="">Not selected</option><option>Hardware</option><option>Tools</option><option>Plumbing</option><option>Paint</option><option>Garden</option><option>Timber</option><option>Other</option></select>
+      <label class="field-label" for="packerInput">Packer name</label><input id="packerInput" autocomplete="name" placeholder="Optional" />
+      <label class="field-label" for="aisleInput">Aisle</label><input id="aisleInput" placeholder="Optional" />
+      <label class="field-label" for="notesInput">Notes</label><textarea id="notesInput" rows="3" placeholder="Optional"></textarea>
+      <menu><button value="cancel" class="secondary-button">Cancel</button><button id="saveDetailsButton" value="default" class="primary-button">Save</button></menu>
+    </form>
+  </dialog>
+
+  <dialog id="attentionDialog">
+    <form method="dialog" class="dialog-card">
+      <div class="section-heading"><h2>Needs attention</h2><button class="icon-button" value="cancel" aria-label="Close">×</button></div>
+      <div class="option-grid">
+        <button value="Packaging" class="choice-button">Packaging</button><button value="Mixed aisles" class="choice-button">Mixed aisles</button><button value="Overstock" class="choice-button">Overstock</button><button value="Wrong location" class="choice-button">Wrong location</button><button value="Damaged stock" class="choice-button">Damaged stock</button><button value="Other" class="choice-button">Other</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="panelDetailDialog" class="panel-dialog">
+    <div class="panel-detail-card">
+      <div class="section-heading"><div><p id="detailEyebrow" class="eyebrow">FLOW DETAIL</p><h2 id="detailTitle">Current cages</h2></div><button id="closePanelDetail" class="icon-button" type="button" aria-label="Close">×</button></div>
+      <p id="detailSummary" class="detail-summary"></p>
+      <div id="detailContent" class="detail-content"></div>
+    </div>
+  </dialog>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <script src="app.js"></script>
+</body>
+</html>
