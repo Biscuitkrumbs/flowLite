@@ -10,13 +10,11 @@ const FlowAPI = {
         return await response.json();
     },
 
-    async createCage(cage) {
-
+    async openCage(request) {
         return await this.post({
-            action: "createCage",
-            ...cage
+            action: "openCage",
+            ...request
         });
-
     }
 
 };

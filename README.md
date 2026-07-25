@@ -1,4 +1,4 @@
-# Flow Lite
+# Flow
 
 A lightweight QR-first roll cage workflow prototype.
 

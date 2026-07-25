@@ -4,14 +4,17 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="theme-color" content="#17231c" />
-  <title>Flow Lite</title>
+  <title>Flow</title>
   <link rel="stylesheet" href="css/styles.css" />
 </head>
 <body>
   <header class="app-header">
-    <div>
-      <p class="eyebrow">FLOW LITE</p>
-      <h1 id="pageTitle">Cage Flow</h1>
+    <div class="header-branding">
+      <div class="brand-line">
+        <span id="brandName" class="brand-name"></span>
+        <span id="editionBadge" class="edition-badge"></span>
+      </div>
+      <h1 id="pageTitle"></h1>
     </div>
     <button id="dashboardButton" class="icon-button" type="button" aria-label="Open instrument panel" title="Instrument panel">
       <span class="panel-icon" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
@@ -21,10 +24,10 @@
   <main class="shell">
     <section id="lookupView" class="view active">
       <div class="card hero-card">
-        <p class="muted">Scan a cage QR or enter its number</p>
-        <label class="field-label" for="cageInput">Cage number</label>
+        <p id="cageInputHint" class="muted"></p>
+        <label id="cageInputLabel" class="field-label" for="cageInput">Cage ID</label>
         <div class="lookup-row">
-          <input id="cageInput" inputmode="numeric" autocomplete="off" placeholder="e.g. 27" />
+          <input id="cageInput" autocomplete="off" autocapitalize="characters" spellcheck="false" />
           <button id="openCageButton" class="primary-button" type="button">Open</button>
         </div>
         <p id="lookupError" class="error" role="alert"></p>
@@ -168,8 +171,9 @@
   </dialog>
 
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
-  <script src="js/config.js"></script>
-  <script src="js/api.js"></script>
-  <script src="js/app.js"></script>
+  <script src="./js/config.js"></script>
+  <script src="./js/qr.js"></script>
+  <script src="./js/ui.js"></script>
+  <script src="./js/app.js"></script>
 </body>
 </html>

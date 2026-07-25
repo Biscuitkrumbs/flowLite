@@ -28,6 +28,10 @@ h2 { margin-bottom: 0; }
 .hidden { display: none !important; }
 
 .app-header { max-width: 1180px; height: 78px; margin: 0 auto; padding: 18px 22px 8px; display: flex; align-items: center; justify-content: space-between; }
+.header-branding { display: grid; gap: 2px; }
+.brand-line { display: flex; align-items: center; gap: 8px; min-height: 18px; }
+.brand-name { color: var(--brand); font-size: .72rem; font-weight: 900; letter-spacing: .17em; text-transform: uppercase; }
+.edition-badge { display: inline-flex; align-items: center; min-height: 18px; padding: 2px 7px; border: 1px solid #d8ddda; border-radius: 999px; background: #edf0ee; color: #6f7772; font-size: .58rem; font-weight: 800; letter-spacing: .04em; line-height: 1; }
 .shell { max-width: 1180px; margin: 0 auto; padding: 10px 22px 34px; }
 .view { display: none; }
 .view.active { display: block; }
