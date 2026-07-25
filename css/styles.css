@@ -203,3 +203,29 @@ dialog::backdrop { background: rgba(18,27,21,.55); backdrop-filter: blur(3px); }
   .flow-status { font-size: 2rem; }
   .flow-lane { height: 50px; }
 }
+
+/* Dashboard personality layer */
+.flow-copy { min-width: 0; }
+.flow-visual { min-width: 0; display: grid; gap: 10px; }
+.story-card { margin-top: 13px; max-width: 360px; padding: 10px 12px; border: 1px solid rgba(36,91,60,.1); border-radius: 13px; background: rgba(255,255,255,.62); }
+.story-card span { display: block; margin-bottom: 3px; color: var(--brand); font-size: .58rem; font-weight: 900; letter-spacing: .11em; text-transform: uppercase; }
+.story-card strong { display: block; color: var(--ink); font-size: .72rem; line-height: 1.35; }
+.pulse-row { display: grid; grid-template-columns: 1fr auto auto; align-items: center; gap: 8px; padding: 0 8px; color: var(--muted); font-size: .65rem; font-weight: 800; }
+.pulse-row strong { color: var(--brand); font-size: 1.45rem; line-height: 1; letter-spacing: -.06em; }
+.pulse-row small { min-width: 42px; padding: 4px 7px; border-radius: 999px; background: rgba(36,91,60,.08); color: var(--brand); text-align: center; font-size: .56rem; }
+.flow-dot { animation: settle .45s ease both, flowBob 2.8s ease-in-out infinite alternate; }
+@keyframes flowBob { to { margin-top: -4px; } }
+.cage-block.filled { animation: blockIn .35s ease both; }
+.cage-block.filled:nth-child(2n) { animation-delay: .04s; }
+.cage-block.filled:nth-child(3n) { animation-delay: .08s; }
+@keyframes blockIn { from { transform: scale(.45); opacity: .15; } }
+
+@media (max-width: 520px) {
+  .story-card { margin-top: 7px; padding: 7px 8px; }
+  .story-card span { font-size: .46rem; }
+  .story-card strong { font-size: .56rem; line-height: 1.25; }
+  .flow-visual { gap: 5px; }
+  .pulse-row { padding: 0 3px; gap: 4px; font-size: .5rem; }
+  .pulse-row strong { font-size: 1rem; }
+  .pulse-row small { min-width: 32px; padding: 2px 4px; font-size: .44rem; }
+}

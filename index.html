@@ -86,11 +86,22 @@
             <span id="statusComparison" class="comparison">Live</span>
           </div>
           <div class="hero-content">
-            <div>
+            <div class="flow-copy">
               <div id="flowStatus" class="flow-status">Flowing</div>
               <p id="flowSummary">Work is moving normally.</p>
+              <div class="story-card">
+                <span>Today’s story</span>
+                <strong id="todaysStory">The operation is establishing its baseline.</strong>
+              </div>
             </div>
-            <div id="flowLane" class="flow-lane" aria-hidden="true"></div>
+            <div class="flow-visual">
+              <div id="flowLane" class="flow-lane" aria-hidden="true"></div>
+              <div class="pulse-row">
+                <span>Flow pulse</span>
+                <strong id="flowPulse">—</strong>
+                <small id="pulseChange">Live</small>
+              </div>
+            </div>
           </div>
           <div class="hero-metrics">
             <span><strong id="activeCount">0</strong> active</span>
@@ -174,6 +185,7 @@
   <script src="./js/config.js"></script>
   <script src="./js/qr.js"></script>
   <script src="./js/ui.js"></script>
+  <script src="./js/dashboard.js"></script>
   <script src="./js/app.js"></script>
 </body>
 </html>
