@@ -1,12 +1,22 @@
 const FLOW_SHEET_NAME = "FlowData";
 const FLOW_DATA_KEY = "shared_state";
 
-function doGet() {
-  return jsonResponse_({
-    ok: true,
-    service: "Flow Lite",
-    message: "Flow API is running"
-  });
+function doGet(e) {
+  try {
+    const action = e && e.parameter && e.parameter.action;
+
+    if (action === "getData") {
+      return jsonResponse_({ ok: true, data: readFlowData_() });
+    }
+
+    return jsonResponse_({
+      ok: true,
+      service: "Flow Lite",
+      message: "Flow API is running"
+    });
+  } catch (error) {
+    return jsonResponse_({ ok: false, error: String(error.message || error) });
+  }
 }
 
 function doPost(e) {

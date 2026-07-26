@@ -3,6 +3,8 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
   <meta name="theme-color" content="#17231c" />
   <title>Flow</title>
   <link rel="stylesheet" href="css/styles.css" />
@@ -48,26 +50,47 @@
       <button id="backButton" class="back-button" type="button">← All cages</button>
 
       <div class="card cage-card">
-        <div class="cage-heading">
-          <div>
-            <p class="eyebrow">ROLL CAGE</p>
-            <h2 id="cageName">RC-027</h2>
+        <div class="cage-location">
+          <div class="location-block destination-block">
+            <span>Destination</span>
+            <strong id="destinationValue">Not entered</strong>
           </div>
-          <span id="statusPill" class="status-pill">First seen</span>
+          <div class="location-block department-block">
+            <span>Department</span>
+            <strong id="departmentValue">Not entered</strong>
+          </div>
         </div>
 
-        <div class="cage-summary" aria-live="polite">
-          <p id="statusText" class="status-text"></p>
-          <p id="cycleMeta" class="muted cycle-meta"></p>
+        <div class="cage-identifier-row">
+          <strong id="cageName">RC-027</strong>
+        </div>
 
-          <div id="destinationSummary" class="destination-summary hidden">
-            <span>Destination</span>
-            <strong id="destinationValue"></strong>
-          </div>
+        <p class="action-heading">Update status</p>
 
-          <div id="departmentSummary" class="summary-detail hidden">
-            <span>Department</span>
-            <strong id="departmentValue"></strong>
+        <div id="normalActions" class="action-grid">
+          <button id="packedButton" class="action-button packed-action" type="button">
+            <span>📦</span><strong>Packed</strong><small>Hold for details</small>
+          </button>
+          <button id="workedButton" class="action-button" type="button"><span>🚶</span><strong>Being worked</strong></button>
+          <button id="emptyButton" class="action-button success" type="button"><span>✓</span><strong>Empty</strong></button>
+          <button id="attentionButton" class="action-button warning" type="button"><span>!</span><strong>Needs attention</strong></button>
+        </div>
+
+        <div id="recoveryActions" class="action-grid hidden">
+          <p class="recovery-note action-grid-wide">This cage has not been updated for more than 24 hours.</p>
+          <button id="extendButton" class="action-button" type="button"><strong>Extend</strong></button>
+          <button id="recoveryEmptyButton" class="action-button success" type="button"><strong>Empty</strong></button>
+          <button id="newLoadButton" class="action-button" type="button"><strong>New load</strong></button>
+          <button id="recoveryAttentionButton" class="action-button warning" type="button"><strong>Needs attention</strong></button>
+        </div>
+
+        <div class="cage-story" aria-live="polite">
+          <div class="status-story">
+            <div>
+              <p id="statusText" class="status-text"></p>
+              <p id="cycleMeta" class="muted cycle-meta"></p>
+            </div>
+            <span id="statusPill" class="status-pill">First seen</span>
           </div>
 
           <div id="messageSummary" class="message-summary hidden">
@@ -76,22 +99,8 @@
           </div>
         </div>
 
-        <div id="normalActions" class="action-stack">
-          <button id="packedButton" class="action-button" type="button"><span>📦</span><strong>Packing complete</strong></button>
-          <button id="workedButton" class="action-button" type="button"><span>🚶</span><strong>Being worked</strong></button>
-          <button id="emptyButton" class="action-button success" type="button"><span>✓</span><strong>Empty</strong></button>
-          <button id="attentionButton" class="action-button warning" type="button"><span>!</span><strong>Needs attention</strong></button>
-        </div>
-
-        <div id="recoveryActions" class="action-stack hidden">
-          <p class="recovery-note">This cage has not been updated for more than 24 hours.</p>
-          <button id="extendButton" class="action-button" type="button"><strong>Extend</strong></button>
-          <button id="recoveryEmptyButton" class="action-button success" type="button"><strong>Empty</strong></button>
-          <button id="newLoadButton" class="action-button" type="button"><strong>New load</strong></button>
-          <button id="recoveryAttentionButton" class="action-button warning" type="button"><strong>Needs attention</strong></button>
-        </div>
-
-        <button id="detailsButton" class="details-button" type="button">Additional information</button>
+        <button id="detailsButton" class="details-button" type="button">☷ <span>History</span></button>
+        <p id="syncStatus" class="sync-status" aria-live="polite">Connecting to shared data…</p>
       </div>
     </section>
 
@@ -201,7 +210,7 @@
 
   <dialog id="detailsDialog">
     <form method="dialog" class="dialog-card">
-      <div class="section-heading"><h2>Additional information</h2><button class="icon-button" value="cancel" aria-label="Close">×</button></div>
+      <div class="section-heading"><h2>Cage details</h2><button class="icon-button" value="cancel" aria-label="Close">×</button></div>
       <label class="field-label" for="departmentInput">Department</label>
       <select id="departmentInput"><option value="">Not selected</option><option>Hardware</option><option>Tools</option><option>Plumbing</option><option>Paint</option><option>Garden</option><option>Timber</option><option>Other</option></select>
       <label class="field-label" for="packerInput">Packer name</label><input id="packerInput" autocomplete="name" placeholder="Optional" />
@@ -229,13 +238,13 @@
   </dialog>
 
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
-  <script src="./js/config.js"></script>
-  <script src="./js/api.js"></script>
+  <script src="./js/config.js?v=20260726-final"></script>
+  <script src="./js/api.js?v=20260726-final"></script>
   <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
-  <script src="./js/qr.js"></script>
-  <script src="./js/qr-labels.js"></script>
-  <script src="./js/ui.js"></script>
-  <script src="./js/dashboard.js"></script>
-  <script src="./js/app.js"></script>
+  <script src="./js/qr.js?v=20260726-final"></script>
+  <script src="./js/qr-labels.js?v=20260726-final"></script>
+  <script src="./js/ui.js?v=20260726-final"></script>
+  <script src="./js/dashboard.js?v=20260726-final"></script>
+  <script src="./js/app.js?v=20260726-final"></script>
 </body>
 </html>
