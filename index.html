@@ -56,8 +56,25 @@
           <span id="statusPill" class="status-pill">First seen</span>
         </div>
 
-        <p id="statusText" class="status-text"></p>
-        <p id="cycleMeta" class="muted"></p>
+        <div class="cage-summary" aria-live="polite">
+          <p id="statusText" class="status-text"></p>
+          <p id="cycleMeta" class="muted cycle-meta"></p>
+
+          <div id="destinationSummary" class="destination-summary hidden">
+            <span>Destination</span>
+            <strong id="destinationValue"></strong>
+          </div>
+
+          <div id="departmentSummary" class="summary-detail hidden">
+            <span>Department</span>
+            <strong id="departmentValue"></strong>
+          </div>
+
+          <div id="messageSummary" class="message-summary hidden">
+            <span>Message from packer</span>
+            <p id="messageValue"></p>
+          </div>
+        </div>
 
         <div id="normalActions" class="action-stack">
           <button id="packedButton" class="action-button" type="button"><span>📦</span><strong>Packing complete</strong></button>
@@ -188,8 +205,8 @@
       <label class="field-label" for="departmentInput">Department</label>
       <select id="departmentInput"><option value="">Not selected</option><option>Hardware</option><option>Tools</option><option>Plumbing</option><option>Paint</option><option>Garden</option><option>Timber</option><option>Other</option></select>
       <label class="field-label" for="packerInput">Packer name</label><input id="packerInput" autocomplete="name" placeholder="Optional" />
-      <label class="field-label" for="aisleInput">Aisle</label><input id="aisleInput" placeholder="Optional" />
-      <label class="field-label" for="notesInput">Notes</label><textarea id="notesInput" rows="3" placeholder="Optional"></textarea>
+      <label class="field-label" for="aisleInput">Destination aisle</label><input id="aisleInput" placeholder="Optional — for example 42" />
+      <label class="field-label" for="notesInput">Message for the next person</label><textarea id="notesInput" rows="3" placeholder="Optional — for example: Mixed items are on a separate shelf"></textarea>
       <menu><button value="cancel" class="secondary-button">Cancel</button><button id="saveDetailsButton" value="default" class="primary-button">Save</button></menu>
     </form>
   </dialog>

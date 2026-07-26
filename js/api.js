@@ -1,7 +1,7 @@
 const FlowAPI = {
   async request(payload) {
     if (!CONFIG.apiUrl) {
-      throw new Error("https://script.google.com/macros/s/AKfycbzA7up-uF8XeqWmVYfgYCOARqVeG1axNkD3D33OzOBApa4F9BUEgclzSEPtfe8bAnDC/exec");
+      throw new Error("Flow API URL is not configured.");
     }
 
     const response = await fetch(CONFIG.apiUrl, {

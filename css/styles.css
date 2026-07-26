@@ -57,6 +57,16 @@ input:focus, select:focus, textarea:focus { border-color: var(--brand); box-shad
 .cage-heading h2 { font-size: clamp(2.2rem, 12vw, 4rem); letter-spacing: -.04em; }
 .status-pill { white-space: nowrap; padding: 8px 11px; border-radius: 999px; background: #e8f0ea; color: var(--brand); font-size: .78rem; font-weight: 800; }
 .status-text { margin: 22px 0 5px; font-size: 1.15rem; font-weight: 800; }
+.cage-summary { margin-top: 18px; padding: 17px; border: 1px solid var(--line); border-radius: 18px; background: var(--surface-soft); }
+.cage-summary .status-text { margin: 0 0 4px; font-size: 1.12rem; font-weight: 850; }
+.cycle-meta { margin-bottom: 0; }
+.destination-summary { margin-top: 16px; padding: 13px 15px; border-radius: 15px; background: #fff; border: 1px solid rgba(36,91,60,.14); }
+.destination-summary span, .summary-detail span, .message-summary > span { display: block; margin-bottom: 4px; color: var(--muted); font-size: .68rem; font-weight: 850; letter-spacing: .09em; text-transform: uppercase; }
+.destination-summary strong { display: block; color: var(--brand-dark); font-size: clamp(1.55rem, 7vw, 2.35rem); line-height: 1; letter-spacing: -.03em; }
+.summary-detail { margin-top: 13px; }
+.summary-detail strong { font-size: 1rem; }
+.message-summary { margin-top: 16px; padding-top: 15px; border-top: 1px solid var(--line); }
+.message-summary p { margin: 0; color: var(--ink); font-size: 1rem; line-height: 1.5; white-space: pre-wrap; }
 .action-stack { display: grid; gap: 11px; margin-top: 22px; }
 .action-button { display: flex; align-items: center; gap: 13px; width: 100%; min-height: 64px; border: 1px solid var(--line); border-radius: 17px; padding: 16px 18px; background: #fff; color: var(--ink); text-align: left; font-size: 1.02rem; transition: .18s ease; }
 .action-button span { width: 26px; font-size: 1.15rem; }

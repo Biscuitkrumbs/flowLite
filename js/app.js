@@ -272,6 +272,18 @@ function formatClock(timestamp) {
     minute: "2-digit"
   }).format(timestamp);
 }
+function formatTime(timestamp) {
+  return new Intl.DateTimeFormat("en-AU", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false
+  }).format(timestamp);
+}
+function destinationLabel(details = {}) {
+  const aisle = String(details.aisle || "").trim();
+  if (!aisle) return "";
+  return /^aisle\s+/i.test(aisle) ? aisle : `Aisle ${aisle}`;
+}
 function dayStart(offset = 0) {
   const date = new Date();
   date.setHours(0, 0, 0, 0);
@@ -295,7 +307,7 @@ function renderRecent() {
     ? recent.map(id => `<button class="chip" data-cage="${id}">${id.replace("RC-", "")}</button>`).join("")
     : '<span class="muted">No recent cages yet</span>';
   document.querySelectorAll("[data-cage]").forEach(button => button.addEventListener("click",
-    () => openKnownCage(button.dataset.cage)));
+    () => openKnownCage(button.dataset.cage, { refresh: true })));
 }
 function displayCage(cageId) {
   currentCageId = cageId;
@@ -306,7 +318,20 @@ function displayCage(cageId) {
   showView("cageView");
 }
 
-function openKnownCage(cageId) {
+async function openKnownCage(cageId, options = {}) {
+  if (options.refresh) {
+    try {
+      const shared = await FlowAPI.getData();
+      if (isValidSharedData(shared)) {
+        data = shared;
+        cacheData();
+        renderRecent();
+      }
+    } catch (error) {
+      console.warn("Could not refresh cage before opening", error);
+    }
+  }
+
   if (!cageExists(cageId)) {
     showLookupError(CONFIG.messages.cageNotFound);
     return;
@@ -379,31 +404,52 @@ function showLookupError(message) {
 }
 function renderCage() {
   const cycle = getOpenCycle(currentCageId);
-  if (! cycle) return;
+  if (!cycle) return;
+
   const stale = Date.now() - lastActivity(cycle) >= STALE_MS;
+  const details = cycle.details || {};
+  const destination = destinationLabel(details);
+  const department = String(details.department || "").trim();
+  const message = String(details.notes || "").trim();
+
   $("cageName").textContent = currentCageId;
   $("normalActions").classList.toggle("hidden", stale);
-  $("recoveryActions").classList.toggle("hidden", ! stale);
+  $("recoveryActions").classList.toggle("hidden", !stale);
   $("packedButton").classList.toggle("hidden", Boolean(cycle.packedAt));
   $("workedButton").classList.toggle("hidden", Boolean(cycle.workedAt));
+
+  $("destinationSummary").classList.toggle("hidden", !destination);
+  $("destinationValue").textContent = destination;
+  $("departmentSummary").classList.toggle("hidden", !department);
+  $("departmentValue").textContent = department;
+  $("messageSummary").classList.toggle("hidden", !message);
+  $("messageValue").textContent = message;
+
+  const destinationPhrase = destination
+    ? ` for ${destination}`
+    : department
+      ? ` for ${department}`
+      : "";
+
   if (stale) {
     $("statusPill").textContent = "Check status";
-    $("statusText").textContent = `Last updated ${formatClock(lastActivity(cycle))}`;
-    $("cycleMeta").textContent = `${formatDuration(Date.now()-cycle.openedAt)} since first scan`;
+    $("statusText").textContent = `Last updated ${formatClock(lastActivity(cycle))}${destinationPhrase}`;
+    $("cycleMeta").textContent = `${formatDuration(Date.now() - cycle.openedAt)} since first scan`;
   } else if (cycle.workedAt) {
     $("statusPill").textContent = "Being worked";
-    $("statusText").textContent = `Work started ${formatDuration(Date.now()-cycle.workedAt)} ago`;
-    $("cycleMeta").textContent = `First seen ${formatDuration(Date.now()-cycle.openedAt)} ago`;
+    $("statusText").textContent = `Being worked since ${formatTime(cycle.workedAt)}${destinationPhrase}`;
+    $("cycleMeta").textContent = `Updated ${formatDuration(Date.now() - cycle.workedAt)} ago`;
   } else if (cycle.packedAt) {
     $("statusPill").textContent = "Packed";
-    $("statusText").textContent = `Packing completed ${formatDuration(Date.now()-cycle.packedAt)} ago`;
-    $("cycleMeta").textContent = `First seen ${formatDuration(Date.now()-cycle.openedAt)} ago`;
+    $("statusText").textContent = `Packed at ${formatTime(cycle.packedAt)}${destinationPhrase}`;
+    $("cycleMeta").textContent = `Packed ${formatDuration(Date.now() - cycle.packedAt)} ago`;
   } else {
     $("statusPill").textContent = "First seen";
-    $("statusText").textContent = `First scanned ${formatDuration(Date.now()-cycle.openedAt)} ago`;
-    $("cycleMeta").textContent = "Waiting is inferred until another event is recorded.";
+    $("statusText").textContent = `First scanned at ${formatTime(cycle.openedAt)}${destinationPhrase}`;
+    $("cycleMeta").textContent = `${formatDuration(Date.now() - cycle.openedAt)} ago`;
   }
 }
+
 function act(type, message) {
   const cycle = getOpenCycle(currentCageId);
   if (! cycle) return;
@@ -455,6 +501,7 @@ function saveDetails() {
   };
   addEvent(cycle, "details_updated", cycle.details);
   saveData();
+  renderCage();
   toast("Details saved");
 }
 function addAttention(reason) {
