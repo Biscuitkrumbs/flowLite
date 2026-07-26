@@ -9,7 +9,7 @@ const views = ["lookupView", "cageView", "dashboardView", "qrLabelsView"];
 let currentCageId = null;
 
 // -----------------------------------------------------------------------------
-// Prototype data and LocalStorage
+// Shared data with LocalStorage cache
 // -----------------------------------------------------------------------------
 function makeSeedData() {
   const now = Date.now();
@@ -151,8 +151,60 @@ function loadData() {
   return makeSeedData();
 }
 let data = loadData();
-function saveData() {
+let remoteSaveTimer = null;
+let remoteSaveInFlight = Promise.resolve();
+let hasLoadedSharedData = false;
+
+function cacheData() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+}
+
+function queueRemoteSave() {
+  clearTimeout(remoteSaveTimer);
+  remoteSaveTimer = setTimeout(() => {
+    const snapshot = JSON.parse(JSON.stringify(data));
+
+    remoteSaveInFlight = remoteSaveInFlight
+      .catch(() => {})
+      .then(() => FlowAPI.saveData(snapshot))
+      .catch(error => {
+        console.error("Shared save failed", error);
+        toast("Saved on this device — shared sync failed");
+      });
+  }, 180);
+}
+
+function saveData() {
+  cacheData();
+  if (hasLoadedSharedData) queueRemoteSave();
+}
+
+function isValidSharedData(value) {
+  return value
+    && Array.isArray(value.cages)
+    && Array.isArray(value.cycles)
+    && Array.isArray(value.events);
+}
+
+async function loadSharedData() {
+  try {
+    const shared = await FlowAPI.getData();
+
+    if (isValidSharedData(shared)) {
+      data = shared;
+      cacheData();
+    } else {
+      await FlowAPI.saveData(data);
+    }
+
+    hasLoadedSharedData = true;
+    return true;
+  } catch (error) {
+    console.error("Shared load failed", error);
+    hasLoadedSharedData = true;
+    toast("Using saved device data — shared sync unavailable");
+    return false;
+  }
 }
 
 // -----------------------------------------------------------------------------
@@ -472,10 +524,16 @@ setInterval(() => {
 const startupParams = new URLSearchParams(location.search);
 const cageFromUrl = startupParams.get("cage");
 
-applyBranding();
-renderRecent();
-saveData();
+async function startFlow() {
+  applyBranding();
+  renderRecent();
 
-if (cageFromUrl) {
-  openCageFromDeepLink(cageFromUrl);
+  await loadSharedData();
+  renderRecent();
+
+  if (cageFromUrl) {
+    openCageFromDeepLink(cageFromUrl);
+  }
 }
+
+startFlow();
