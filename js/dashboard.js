@@ -7,7 +7,7 @@ function dashboardMetrics() {
   const openedToday = data.cycles.filter(c => c.openedAt >= today && c.openedAt < tomorrow);
   const completedToday = data.cycles.filter(c => c.closedAt >= today && c.closedAt < tomorrow);
   const completedYesterday = data.cycles.filter(c => c.closedAt >= yesterday && c.closedAt < today);
-  const attention = data.events.filter(e => e.type === "needs_attention" && e.timestamp >= today && e.timestamp < tomorrow);
+  const attention = FlowState.openIssues(data);
   const over24 = open.filter(c => now - lastActivity(c) >= STALE_MS);
   const averageMs = completedToday.length ? completedToday.reduce((sum, c) => sum + (c.closedAt - c.openedAt),
   0) / completedToday.length: 0;
@@ -98,10 +98,13 @@ function renderAgeDots(open) {
     const age = Date.now() - c.openedAt; return `<span class="age-dot ${age>=STALE_MS?"old":age>=6*60*60*1000?"mid":""}"></span>`;
   }).join("");
 }
+function escapeHtml(value) {
+  return String(value ?? "").replace(/[&<>"']/g, character => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[character]);
+}
 function renderFriction(friction) {
   const entries = Object.entries(friction).sort((a, b) => b[1] - a[1]).slice(0, 4);
   const max = Math.max(1, ...entries.map(e => e[1]));
-  $("frictionBars").innerHTML = entries.length ? entries.map(([name, count]) => `<div class="friction-row"><span>${name}</span><div class="friction-track"><div class="friction-fill" style="width:${(count/max)*100}%"></div></div><span class="friction-count">${count}</span></div>`).join(""): '<div class="detail-empty">No friction recorded today</div>';
+  $("frictionBars").innerHTML = entries.length ? entries.map(([name, count]) => `<div class="friction-row"><span>${escapeHtml(name)}</span><div class="friction-track"><div class="friction-fill" style="width:${(count/max)*100}%"></div></div><span class="friction-count">${count}</span></div>`).join(""): '<div class="detail-empty">No open support requests</div>';
 }
 function renderActivity(hours) {
   const visible = hours.slice(Math.max(0, hours.length - 12));
@@ -168,15 +171,15 @@ function detailRow(cycle, button = true) {
       : "First seen";
   const age = formatDuration(Date.now() - cycle.openedAt);
   const department = cycle.details?.department
-    ? ` · ${cycle.details.department}`
+    ? ` · ${escapeHtml(cycle.details.department)}`
     : "";
   const openButton = button
-    ? `<button data-detail-open="${cycle.cageId}">Open</button>`
+    ? `<button data-detail-open="${escapeHtml(cycle.cageId)}">Open</button>`
     : "";
 
   return `<div class="detail-row">
     <div>
-      <strong>${cycle.cageId}</strong>
+      <strong>${escapeHtml(cycle.cageId)}</strong>
       <small>${status} · ${age}${department}</small>
     </div>
     ${openButton}
@@ -199,21 +202,21 @@ function showPanelDetail(type) {
   if (type === "cycle") {
     title = "Cycle time";
     summary = "Completed cage cycles from today, longest first.";
-    content = [...m.completedToday].sort((a, b) => (b.closedAt - b.openedAt) - (a.closedAt - a.openedAt)).map(c => `<div class="detail-row"><div><strong>${c.cageId}</strong><small>${formatClock(c.closedAt)} completed</small></div><strong>${formatDuration(c.closedAt-c.openedAt)}</strong></div>`).join("") ||
+    content = [...m.completedToday].sort((a, b) => (b.closedAt - b.openedAt) - (a.closedAt - a.openedAt)).map(c => `<div class="detail-row"><div><strong>${escapeHtml(c.cageId)}</strong><small>${formatClock(c.closedAt)} completed</small></div><strong>${formatDuration(c.closedAt-c.openedAt)}</strong></div>`).join("") ||
     '<div class="detail-empty">No completed cycles today</div>';
   }
   if (type === "attention") {
     title = "Attention required";
-    summary = "Cages over 24 hours and issues recorded today.";
+    summary = "Cages needing a status check and unresolved support requests.";
     const old = m.over24.map(c => detailRow(c)).join("");
-    const issues = m.attention.map(e => `<div class="detail-row"><div><strong>${e.cageId} · ${e.details?.reason||"Other"}</strong><small>${formatClock(e.timestamp)}</small></div><button data-detail-open="${e.cageId}">Open</button></div>`).join("");
+    const issues = m.attention.map(e => `<div class="detail-row"><div><strong>${escapeHtml(e.cageId)} · ${escapeHtml(e.details?.reason||"Other")}</strong><small>${formatClock(e.timestamp)}</small></div><button data-detail-open="${escapeHtml(e.cageId)}">Open</button></div>`).join("");
     content = old + issues || '<div class="detail-empty">Nothing currently requires attention</div>';
   }
   if (type === "friction") {
     title = "Friction points";
-    summary = "Observed issues only. Flow does not assume the cause.";
-    content = Object.entries(m.friction).sort((a, b) => b[1] - a[1]).map(([reason, count]) => `<div class="detail-row"><div><strong>${reason}</strong><small>Recorded today</small></div><strong>${count}</strong></div>`).join("") ||
-    '<div class="detail-empty">No friction recorded today</div>';
+    summary = "Unresolved support requests on active cage cycles.";
+    content = Object.entries(m.friction).sort((a, b) => b[1] - a[1]).map(([reason, count]) => `<div class="detail-row"><div><strong>${escapeHtml(reason)}</strong><small>Open requests</small></div><strong>${count}</strong></div>`).join("") ||
+    '<div class="detail-empty">No open support requests</div>';
   }
   if (type === "activity") {
     title = "Movement today";

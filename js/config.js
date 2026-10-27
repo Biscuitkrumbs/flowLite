@@ -1,7 +1,7 @@
 const CONFIG = {
   apiUrl: "https://script.google.com/macros/s/AKfycbzA7up-uF8XeqWmVYfgYCOARqVeG1axNkD3D33OzOBApa4F9BUEgclzSEPtfe8bAnDC/exec",
-  debug: true,
-  build: "2026.07.26-final-demo",
+  debug: false,
+  build: "2026.10.28-safe-sync",
 
   brand: {
     name: "Flow",

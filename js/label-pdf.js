@@ -22,39 +22,42 @@ const FlowLabelPdf = {
 
       labels.slice(first, first + 18).forEach((label, index) => {
         if (!/^RC-\d{3}$/.test(label.cageId)) throw new Error("Invalid cage ID.");
-        const x = labelLeft + (index % 3) * columnPitch;
-        const top = labelTop + Math.floor(index / 3) * rowPitch;
+        const labelX = labelLeft + (index % 3) * columnPitch;
+        const labelY = pageHeight - labelTop - Math.floor(index / 3) * rowPitch;
+        // Original portrait composition, rotated clockwise into a 62 x 42 mm label.
+        commands.push(`q 0 -1 1 0 ${number(labelX)} ${number(labelY)} cm`);
         const code = qrcode(0, "M");
         code.addData(label.url);
         code.make();
 
         const count = code.getModuleCount();
-        const size = 27 * mm;
+        const size = 32 * mm;
         const unit = size / (count + 8);
-        const qrX = x + (62 * mm - size) / 2 + 4 * unit;
-        const qrTop = top + 6 * mm + 4 * unit;
+        const qrX = (42 * mm - size) / 2 + 4 * unit;
+        const qrTop = 51 * mm - 4 * unit;
 
         // A four-module clear margin surrounds every QR code.
         for (let row = 0; row < count; row++) {
           for (let col = 0; col < count; col++) {
             if (code.isDark(row, col)) {
-              commands.push(`${number(qrX + col * unit)} ${number(pageHeight - qrTop - (row + 1) * unit)} ${number(unit)} ${number(unit)} re f`);
+              commands.push(`${number(qrX + col * unit)} ${number(qrTop - (row + 1) * unit)} ${number(unit)} ${number(unit)} re f`);
             }
           }
         }
 
         const text = (value, font, sizePt, offsetX, baseline) => {
-          commands.push(`BT /${font} ${sizePt} Tf ${number(x + offsetX * mm)} ${number(pageHeight - top - baseline * mm)} Td (${value}) Tj ET`);
+          commands.push(`BT /${font} ${sizePt} Tf ${number(offsetX * mm)} ${number((62 - baseline) * mm)} Td (${value}) Tj ET`);
         };
 
         // Match the on-screen preview: brand, centred QR, modest ID, asset type.
         // Standard Helvetica widths in em keep each fixed-format line centred.
         const headerWidth = 2.944 * 7.5 + 3 + 1.612 * 5.5;
-        const headerX = (62 * mm - headerWidth) / 2;
-        text("FLOW", "F1", 7.5, headerX / mm, 5);
-        text("Lite", "F2", 5.5, (headerX + 2.944 * 7.5 + 3) / mm, 5);
-        text(label.cageId, "F1", 11, (62 * mm - 3.445 * 11) / (2 * mm), 36.5);
-        text("ROLL CAGE", "F2", 5.5, (62 * mm - 5.502 * 5.5) / (2 * mm), 39.5);
+        const headerX = (42 * mm - headerWidth) / 2;
+        text("FLOW", "F1", 7.5, headerX / mm, 7);
+        text("Lite", "F2", 5.5, (headerX + 2.944 * 7.5 + 3) / mm, 7);
+        text(label.cageId, "F1", 13, (42 * mm - 3.445 * 13) / (2 * mm), 49);
+        text("ROLL CAGE", "F2", 6, (42 * mm - 5.502 * 6) / (2 * mm), 54);
+        commands.push("Q");
       });
 
       const stream = commands.join("\n") + "\n";

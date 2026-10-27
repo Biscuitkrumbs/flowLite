@@ -1,5 +1,7 @@
 # Flow feature review - 28 October 2026
 
+**Update:** The gaps listed below describe the original reviewed version. The reliability update now adds action-based shared saves, a durable phone outbox, safe retries, a real History timeline, support resolution, explicit isolated demo mode, safe text rendering, periodic remote refresh and non-destructive setup. See `RELIABILITY-UPDATE.md` for the current implementation and remaining limits. The compact dashboard mockup is still a separate design proposal.
+
 Reviewed the original GitHub main revision de2747978c54bf93782abe6e8f8181aa73a7acd0, including the roadmap, page controls, browser modules and supplied Apps Script. This is a source review with targeted isolated browser checks, not a validation of the deployed spreadsheet backend.
 
 ## Existing features to preserve

@@ -7,7 +7,7 @@
   <meta http-equiv="Pragma" content="no-cache" />
   <meta name="theme-color" content="#17231c" />
   <title>Flow</title>
-  <link rel="stylesheet" href="css/styles.css" />
+  <link rel="stylesheet" href="css/styles.css?v=20261028-safe" />
 </head>
 <body>
   <header class="app-header">
@@ -29,6 +29,11 @@
   </header>
 
   <main class="shell">
+    <div id="sharedStatus" class="shared-status no-print" role="status" data-state="pending">
+      <span id="sharedStatusText">Connecting to shared data…</span>
+      <button id="retrySyncButton" type="button" hidden>Retry</button>
+      <button id="discardPendingButton" type="button" hidden>Discard pending changes</button>
+    </div>
     <section id="lookupView" class="view active">
       <div class="card hero-card">
         <p id="cageInputHint" class="muted"></p>
@@ -49,7 +54,8 @@
     <section id="cageView" class="view">
       <button id="backButton" class="back-button" type="button">← All cages</button>
 
-      <div class="card cage-card">
+      <div id="closedCycleNotice" class="card compact-card" hidden>This cycle has closed on another phone. Go back and reopen the cage.</div>
+      <div id="cageContent" class="card cage-card">
         <div class="cage-location">
           <div class="location-block destination-block">
             <span>Destination</span>
@@ -99,7 +105,10 @@
           </div>
         </div>
 
-        <button id="detailsButton" class="details-button" type="button">☷ <span>History</span></button>
+        <div class="cage-secondary-actions">
+          <button id="editDetailsButton" class="details-button" type="button">Edit details</button>
+          <button id="detailsButton" class="details-button" type="button">History</button>
+        </div>
         <p id="syncStatus" class="sync-status" aria-live="polite">Connecting to shared data…</p>
       </div>
     </section>
@@ -189,13 +198,13 @@
           <div class="instrument-heading"><span>Attention</span><span id="attentionBadge" class="attention-badge">Clear</span></div>
           <div class="attention-grid">
             <div><strong id="over24Count">0</strong><span>over 24h</span></div>
-            <div><strong id="attentionCount">0</strong><span>issues today</span></div>
+            <div><strong id="attentionCount">0</strong><span>open requests</span></div>
           </div>
           <div id="ageDots" class="age-dots" aria-hidden="true"></div>
         </button>
 
         <button class="instrument friction-instrument" data-detail="friction" type="button">
-          <div class="instrument-heading"><span>Friction today</span><span id="frictionTotal" class="comparison">0 events</span></div>
+          <div class="instrument-heading"><span>Support needed</span><span id="frictionTotal" class="comparison">0 requests</span></div>
           <div id="frictionBars" class="friction-bars"></div>
         </button>
 
@@ -229,6 +238,13 @@
     </form>
   </dialog>
 
+  <dialog id="historyDialog">
+    <div class="dialog-card">
+      <div class="section-heading"><h2 id="historyTitle">Cage history</h2><button id="closeHistoryButton" class="icon-button" type="button" aria-label="Close history">×</button></div>
+      <div id="historyEvents"></div>
+    </div>
+  </dialog>
+
   <dialog id="panelDetailDialog" class="panel-dialog">
     <div class="panel-detail-card">
       <div class="section-heading"><div><p id="detailEyebrow" class="eyebrow">FLOW DETAIL</p><h2 id="detailTitle">Current cages</h2></div><button id="closePanelDetail" class="icon-button" type="button" aria-label="Close">×</button></div>
@@ -238,14 +254,16 @@
   </dialog>
 
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
-  <script src="./js/config.js?v=20260726-final"></script>
-  <script src="./js/api.js?v=20260726-final"></script>
-  <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
+  <script src="./js/config.js?v=20261028-safe"></script>
+  <script src="./js/flow-state.js?v=20261028-safe"></script>
+  <script src="./js/api.js?v=20261028-safe"></script>
+  <script src="./js/sync.js?v=20261028-safe"></script>
+  <script src="./vendor/qrcode.min.js?v=1.4.4"></script>
   <script src="./js/qr.js?v=20260726-final"></script>
-  <script src="./js/label-pdf.js?v=20261028-centered"></script>
+  <script src="./js/label-pdf.js?v=20261028-rotated"></script>
   <script src="./js/qr-labels.js?v=20261028"></script>
   <script src="./js/ui.js?v=20260726-final"></script>
-  <script src="./js/dashboard.js?v=20260726-final"></script>
-  <script src="./js/app.js?v=20261028"></script>
+  <script src="./js/dashboard.js?v=20261028-safe"></script>
+  <script src="./js/app.js?v=20261028-safe"></script>
 </body>
 </html>

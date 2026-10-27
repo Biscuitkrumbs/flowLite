@@ -139,102 +139,55 @@ function makeSeedData() {
     events
   };
 }
-function loadData() {
-  const stored = localStorage.getItem(STORAGE_KEY);
-  if (stored) {
-    try {
-      return JSON.parse(stored);
-    } catch {
-      localStorage.removeItem(STORAGE_KEY);
-    }
-  }
-  return makeSeedData();
-}
-let data = loadData();
-let remoteSaveTimer = null;
-let remoteSaveInFlight = Promise.resolve();
+const DEMO_MODE = new URLSearchParams(location.search).get("demo") === "1";
+let data = FlowState.empty();
 let hasLoadedSharedData = false;
 let pendingPackedDetails = false;
-let lastSharedSyncAt = null;
-
-function cacheData() {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-}
+let editingCycleId = null;
+let editingBaseDetails = {};
 
 function setSyncStatus(message, state = "") {
-  const el = $("syncStatus");
-  if (!el) return;
-  el.textContent = message;
-  el.classList.toggle("synced", state === "synced");
-  el.classList.toggle("failed", state === "failed");
-}
-
-async function pushSharedData(snapshot = data) {
-  setSyncStatus("Saving to shared data…");
-  const saved = await FlowAPI.saveData(snapshot);
-  if (isValidSharedData(saved)) {
-    data = saved;
-    cacheData();
+  for (const id of ["syncStatus", "sharedStatusText"]) {
+    const el = $(id);
+    if (el) el.textContent = message;
   }
-  lastSharedSyncAt = Date.now();
-  setSyncStatus("Shared data up to date", "synced");
-  return true;
+  $("sharedStatus").dataset.state = state;
+  $("retrySyncButton").hidden = !["failed", "conflict"].includes(state);
+  $("discardPendingButton").hidden = state !== "conflict";
 }
 
-function queueRemoteSave() {
-  clearTimeout(remoteSaveTimer);
-  remoteSaveTimer = setTimeout(() => {
-    const snapshot = JSON.parse(JSON.stringify(data));
-    remoteSaveInFlight = remoteSaveInFlight
-      .catch(() => {})
-      .then(() => pushSharedData(snapshot))
-      .catch(error => {
-        console.error("Shared save failed", error);
-        setSyncStatus("Shared save failed — tap History to retry", "failed");
-        toast("Saved on this device — shared sync failed");
-      });
-  }, 120);
+function renderSharedState() {
+  renderRecent();
+  if (currentCageId && $("cageView").classList.contains("active")) renderCage();
+  if ($("dashboardView").classList.contains("active")) renderDashboard();
+  if ($("historyDialog").open) renderHistory();
 }
 
-function saveData() {
-  cacheData();
-  if (hasLoadedSharedData) queueRemoteSave();
-}
+const sync = new FlowSync({
+  demo: DEMO_MODE,
+  seed: DEMO_MODE ? makeSeedData() : FlowState.empty(),
+  onChange(state) { data = state; renderSharedState(); },
+  onStatus: setSyncStatus
+});
+data = sync.state;
 
-function isValidSharedData(value) {
-  return value
-    && Array.isArray(value.cages)
-    && Array.isArray(value.cycles)
-    && Array.isArray(value.events);
-}
-
-async function refreshSharedData({ quiet = false } = {}) {
-  try {
-    if (!quiet) setSyncStatus("Loading shared data…");
-    const shared = await FlowAPI.getData();
-
-    if (isValidSharedData(shared)) {
-      data = shared;
-      cacheData();
-    } else {
-      await pushSharedData(data);
-    }
-
-    lastSharedSyncAt = Date.now();
-    setSyncStatus("Shared data up to date", "synced");
-    return true;
-  } catch (error) {
-    console.error("Shared load failed", error);
-    setSyncStatus("Using this device — shared sync unavailable", "failed");
-    if (!quiet) toast("Using saved device data — shared sync unavailable");
-    return false;
-  }
-}
-
+function refreshSharedData() { return sync.synchronize(); }
 async function loadSharedData() {
-  const ok = await refreshSharedData();
+  const ok = await sync.synchronize();
   hasLoadedSharedData = true;
   return ok;
+}
+
+function recordAction(operation, message) {
+  try {
+    sync.enqueue(operation);
+    if (message) toast(DEMO_MODE ? message : `${message} · pending sync`);
+    return true;
+  } catch (error) {
+    toast(error.message);
+    showLookupError(error.message);
+    return false;
+  }
 }
 
 // -----------------------------------------------------------------------------
@@ -256,32 +209,6 @@ function cageExists(cageId) {
 }
 function getOpenCycle(cageId) {
   return [...data.cycles].reverse().find(c => c.cageId === cageId && ! c.closedAt) || null;
-}
-function addEvent(cycle, type, details = {}) {
-  data.events.push( {
-    id: crypto.randomUUID(),
-    cycleId: cycle.id,
-    cageId: cycle.cageId,
-    timestamp: Date.now(),
-    type,
-    details
-  });
-  saveData();
-}
-function openOrCreateCycle(cageId) {
-  let cycle = getOpenCycle(cageId);
-  if (! cycle) {
-    cycle = {
-      id: crypto.randomUUID(),
-      cageId,
-      openedAt: Date.now(),
-      closedAt: null,
-      details: {}
-    };
-    data.cycles.push(cycle);
-    addEvent(cycle, "first_scan");
-  }
-  return cycle;
 }
 function cycleEvents(cycle) {
   return data.events.filter(e => e.cycleId === cycle.id);
@@ -324,24 +251,30 @@ function dayStart(offset = 0) {
 // -----------------------------------------------------------------------------
 // Cage lookup and workflow
 // -----------------------------------------------------------------------------
+function recentCages() {
+  try {
+    const value = JSON.parse(localStorage.getItem(RECENT_KEY) || "[]");
+    return Array.isArray(value) ? value.filter(id => /^RC-\d{3}$/.test(id)) : [];
+  } catch { return []; }
+}
 function rememberCage(cageId) {
-  const recent = JSON.parse(localStorage.getItem(RECENT_KEY) || "[]").filter(id => id !== cageId);
+  const recent = recentCages().filter(id => id !== cageId);
   recent.unshift(cageId);
-  localStorage.setItem(RECENT_KEY, JSON.stringify(recent.slice(0, 6)));
+  try { localStorage.setItem(RECENT_KEY, JSON.stringify(recent.slice(0, 6))); }
+  catch (error) { console.warn("Recent cages could not be saved", error); }
   renderRecent();
 }
 function renderRecent() {
-  const recent = JSON.parse(localStorage.getItem(RECENT_KEY) || "[]")
-    .filter(cageExists);
+  const recent = recentCages().filter(cageExists);
   $("recentCages").innerHTML = recent.length
     ? recent.map(id => `<button class="chip" data-cage="${id}">${id.replace("RC-", "")}</button>`).join("")
     : '<span class="muted">No recent cages yet</span>';
   document.querySelectorAll("[data-cage]").forEach(button => button.addEventListener("click",
     () => openKnownCage(button.dataset.cage, { refresh: true })));
 }
-function displayCage(cageId) {
+function displayCage(cageId, source = "manual", payload = "") {
+  if (!recordAction({ type: "open", cageId, source, payload, newCycleId: crypto.randomUUID() })) return;
   currentCageId = cageId;
-  openOrCreateCycle(cageId);
   rememberCage(cageId);
   renderCage();
   showLookupError("");
@@ -365,7 +298,7 @@ async function openKnownCage(cageId, options = {}) {
 function normaliseTypedCageId(value) {
   const match = String(value || "").trim().toUpperCase().match(/^(?:RC-)?(\d{1,3})$/);
   if (!match) return null;
-  return toInternalCageId(match[1].padStart(3, "0"));
+  return Number(match[1]) > 0 ? toInternalCageId(match[1].padStart(3, "0")) : null;
 }
 
 function openCageFromDeepLink(payload) {
@@ -376,12 +309,7 @@ function openCageFromDeepLink(payload) {
     return;
   }
 
-  if (!cageExists(cageId)) {
-    data.cages.push({ id: cageId, active: true });
-    saveData();
-  }
-
-  displayCage(cageId);
+  displayCage(cageId, "label");
 }
 
 function openCageFromInput(payload) {
@@ -407,17 +335,8 @@ function openCageFromInput(payload) {
 
   const cageId = toInternalCageId(parsed.cageId);
 
-  if (!cageExists(cageId)) {
-    data.cages.push({
-      id: cageId,
-      active: true,
-    });
-
-    saveData();
-  }
-
   $("cageInput").value = "";
-  displayCage(cageId);
+  displayCage(cageId, "qr", parsed.payload);
 }
 
 
@@ -426,6 +345,8 @@ function showLookupError(message) {
 }
 function renderCage() {
   const cycle = getOpenCycle(currentCageId);
+  $("closedCycleNotice").hidden = Boolean(cycle);
+  $("cageContent").hidden = !cycle;
   if (!cycle) return;
 
   const stale = Date.now() - lastActivity(cycle) >= STALE_MS;
@@ -437,7 +358,7 @@ function renderCage() {
   $("cageName").textContent = currentCageId;
   $("normalActions").classList.toggle("hidden", stale);
   $("recoveryActions").classList.toggle("hidden", !stale);
-  $("packedButton").classList.toggle("hidden", Boolean(cycle.packedAt));
+  $("packedButton").classList.toggle("hidden", Boolean(cycle.packedAt || cycle.workedAt));
   $("workedButton").classList.toggle("hidden", Boolean(cycle.workedAt));
 
   $("destinationValue").textContent = destination || "Not entered";
@@ -468,77 +389,82 @@ function renderCage() {
 
 function act(type, message) {
   const cycle = getOpenCycle(currentCageId);
-  if (! cycle) return;
-  const now = Date.now();
-  if (type === "packed") cycle.packedAt = now;
-  if (type === "worked") cycle.workedAt = now;
-  if (type === "empty") cycle.closedAt = now;
-  addEvent(cycle, type);
-  saveData();
-  toast(message);
-  if (type === "empty") {
-    showView("lookupView");
-    renderRecent();
-  } else renderCage();
+  if (!cycle) { toast("This cycle has closed. Reopen the cage."); return; }
+  if (!recordAction({ type, cageId: currentCageId, cycleId: cycle.id }, message)) return;
+  if (type === "empty") showView("lookupView");
+  else renderCage();
 }
 function recoveryNewLoad() {
-  const current = getOpenCycle(currentCageId);
-  current.closedAt = Date.now();
-  current.closeReason = "new_load";
-  addEvent(current, "new_load_detected");
-  const next = {
-    id: crypto.randomUUID(),
-    cageId: currentCageId,
-    openedAt: Date.now(),
-    closedAt: null,
-    details: {}
-  };
-  data.cycles.push(next);
-  addEvent(next, "first_scan");
-  saveData();
-  toast("New load started");
-  renderCage();
+  const cycle = getOpenCycle(currentCageId);
+  if (!cycle) return;
+  recordAction({ type: "new_load", cageId: currentCageId, cycleId: cycle.id,
+    newCycleId: crypto.randomUUID() }, "New load started");
 }
 function openDetails(options = {}) {
   const cycle = getOpenCycle(currentCageId);
+  if (!cycle) { toast("This cycle has closed. Reopen the cage."); return; }
+  editingCycleId = cycle.id;
+  editingBaseDetails = JSON.parse(JSON.stringify(cycle.details || {}));
   pendingPackedDetails = Boolean(options.markPacked);
-  $("departmentInput").value = cycle.details?.department || "";
-  $("packerInput").value = cycle.details?.packer || "";
-  $("aisleInput").value = cycle.details?.aisle || "";
-  $("notesInput").value = cycle.details?.notes || "";
-  $("saveDetailsButton").textContent = pendingPackedDetails
-    ? "Save and mark packed"
-    : "Save details";
+  for (const [input, key] of [["departmentInput", "department"], ["packerInput", "packer"], ["aisleInput", "aisle"], ["notesInput", "notes"]]) {
+    $(input).value = cycle.details?.[key] || "";
+  }
+  $("saveDetailsButton").textContent = pendingPackedDetails ? "Save and mark packed" : "Save details";
   $("detailsDialog").showModal();
 }
-function saveDetails() {
-  const cycle = getOpenCycle(currentCageId);
-  cycle.details = {
-    department: $("departmentInput").value,
-    packer: $("packerInput").value.trim(),
-    aisle: $("aisleInput").value.trim(),
-    notes: $("notesInput").value.trim()
-  };
-  addEvent(cycle, "details_updated", cycle.details);
-
-  if (pendingPackedDetails && !cycle.packedAt) {
-    cycle.packedAt = Date.now();
-    addEvent(cycle, "packed");
-  }
-
-  const packedWithDetails = pendingPackedDetails;
-  pendingPackedDetails = false;
-  saveData();
-  renderCage();
-  toast(packedWithDetails ? "Details saved and packing recorded" : "Details saved");
+function saveDetails(event) {
+  event.preventDefault();
+  const packed = pendingPackedDetails;
+  const ok = recordAction({ type: "details", cageId: currentCageId, cycleId: editingCycleId,
+    baseDetails: editingBaseDetails, markPacked: packed,
+    details: { department: $("departmentInput").value, packer: $("packerInput").value.trim(),
+      aisle: $("aisleInput").value.trim(), notes: $("notesInput").value.trim() }
+  }, packed ? "Details and packing recorded" : "Details recorded");
+  if (ok) { pendingPackedDetails = false; $("detailsDialog").close(); }
 }
 function addAttention(reason) {
   const cycle = getOpenCycle(currentCageId);
-  addEvent(cycle, "needs_attention", {
-    reason
-  });
-  toast(`Attention noted: ${reason}`);
-  renderCage();
+  if (!cycle) return;
+  recordAction({ type: "attention", cageId: currentCageId, cycleId: cycle.id, reason }, "Support request recorded");
+}
+function resolveAttention(issueId) {
+  const issue = data.events.find(event => event.id === issueId);
+  if (!issue) return;
+  recordAction({ type: "resolve_attention", cageId: issue.cageId, cycleId: issue.cycleId, issueId }, "Support request resolved");
+  renderHistory();
+}
+
+function renderHistory() {
+  const target = $("historyEvents");
+  target.replaceChildren();
+  const labels = { first_scan: "Cycle started", packed: "Packed", worked: "Being worked", empty: "Empty",
+    extended: "Cycle extended", new_load_detected: "New load", details_updated: "Details updated",
+    needs_attention: "Support requested", attention_resolved: "Support resolved" };
+  const issues = new Set(FlowState.openIssues(data).map(event => event.id));
+  const events = data.events.filter(event => event.cageId === currentCageId).sort((a,b) => b.timestamp - a.timestamp);
+  $("historyTitle").textContent = `Cage ${currentCageId?.replace("RC-", "")} history`;
+  for (const event of events) {
+    const row = document.createElement("div");
+    row.className = "history-row";
+    const title = document.createElement("strong");
+    title.textContent = labels[event.type] || "Cage updated";
+    const detail = document.createElement("small");
+    detail.textContent = `${formatClock(event.timestamp)}${event.details?.reason ? ` · ${event.details.reason}` : ""}`;
+    row.append(title, detail);
+    if (event.type === "details_updated") {
+      const note = document.createElement("p");
+      note.textContent = [event.details?.department, destinationLabel(event.details), event.details?.notes].filter(Boolean).join(" · ");
+      row.append(note);
+    }
+    if (issues.has(event.id)) {
+      const button = document.createElement("button");
+      button.type = "button"; button.className = "secondary-button"; button.textContent = "Mark resolved";
+      button.addEventListener("click", () => resolveAttention(event.id));
+      row.append(button);
+    }
+    target.append(row);
+  }
+  if (!events.length) target.textContent = "No history recorded for this cage yet.";
 }
 
 // -----------------------------------------------------------------------------
@@ -561,6 +487,7 @@ $("cageInput").addEventListener("keydown", event => {
 $("backButton").addEventListener("click", () => showView("lookupView"));
 $("dashboardButton").addEventListener("click", () => {
   renderDashboard(); showView("dashboardView");
+  refreshSharedData();
 });
 $("dashboardBackButton").addEventListener("click", () => showView("lookupView"));
 $("qrLabelsButton").addEventListener("click", () => {
@@ -610,11 +537,14 @@ $("recoveryEmptyButton").addEventListener("click", () => act("empty", "Cage cycl
 $("newLoadButton").addEventListener("click", recoveryNewLoad);
 $("attentionButton").addEventListener("click", () => $("attentionDialog").showModal());
 $("recoveryAttentionButton").addEventListener("click", () => $("attentionDialog").showModal());
-$("detailsButton").addEventListener("click", async () => {
-  await refreshSharedData({ quiet: true });
-  if (currentCageId) renderCage();
-  openDetails();
+$("detailsButton").addEventListener("click", () => {
+  renderHistory();
+  $("historyDialog").showModal();
 });
+$("editDetailsButton").addEventListener("click", () => openDetails());
+$("closeHistoryButton").addEventListener("click", () => $("historyDialog").close());
+$("retrySyncButton").addEventListener("click", () => sync.synchronize());
+$("discardPendingButton").addEventListener("click", () => sync.discardRejected());
 $("saveDetailsButton").addEventListener("click", saveDetails);
 $("attentionDialog").addEventListener("close", () => {
   if ($("attentionDialog").returnValue && $("attentionDialog").returnValue !== "cancel") addAttention($("attentionDialog").returnValue);
@@ -642,8 +572,9 @@ window.addEventListener("resize", () => {
   if ($("dashboardView").classList.contains("active")) renderDashboard();
 });
 setInterval(() => {
-  if ($("dashboardView").classList.contains("active")) renderDashboard();
-}, 60000);
+  if (document.visibilityState === "visible" && !$("detailsDialog").open) refreshSharedData();
+}, 30000);
+window.addEventListener("online", () => sync.synchronize());
 
 // -----------------------------------------------------------------------------
 // Application startup
