@@ -107,14 +107,14 @@
     <section id="qrLabelsView" class="view qr-labels-view">
       <div class="qr-labels-toolbar no-print">
         <button id="qrLabelsBackButton" class="back-button" type="button">← Back</button>
-        <button id="printQrLabelsButton" class="primary-button" type="button">Print labels</button>
+        <button id="printQrLabelsButton" class="primary-button" type="button">Download PDF</button>
       </div>
 
       <div class="card qr-generator-card no-print">
         <div>
           <p class="eyebrow">LABEL GENERATOR</p>
           <h2>Cage QR labels</h2>
-          <p class="muted qr-help">Each QR opens Flow directly on that cage. The large cage ID remains readable without scanning.</p>
+          <p class="muted qr-help">Avery L7109: 18 labels per A4 sheet, 62 × 42 mm. Each QR opens its cage. Print the PDF at 100% / Actual size.</p>
         </div>
         <div class="qr-generator-controls">
           <label class="field-label" for="qrStartInput">Starting cage</label>
@@ -242,9 +242,10 @@
   <script src="./js/api.js?v=20260726-final"></script>
   <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
   <script src="./js/qr.js?v=20260726-final"></script>
-  <script src="./js/qr-labels.js?v=20260726-final"></script>
+  <script src="./js/label-pdf.js?v=20261028"></script>
+  <script src="./js/qr-labels.js?v=20261028"></script>
   <script src="./js/ui.js?v=20260726-final"></script>
   <script src="./js/dashboard.js?v=20260726-final"></script>
-  <script src="./js/app.js?v=20260726-final"></script>
+  <script src="./js/app.js?v=20261028"></script>
 </body>
 </html>

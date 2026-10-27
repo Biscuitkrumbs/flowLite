@@ -24,22 +24,43 @@ function makeQrDataUrl(text) {
   return qr.createDataURL(7, 4);
 }
 
-function renderQrLabels() {
+function selectedQrLabels() {
   const start = normaliseStartingCage($("qrStartInput").value);
-  const count = Math.max(1, Math.min(100, Number($("qrCountInput").value) || 1));
-  const output = $("qrLabelsGrid");
+  const count = Number($("qrCountInput").value);
   const error = $("qrLabelsError");
 
-  if (start === null || start < 1 || start > 999 || start + count - 1 > 999) {
-    error.textContent = "Enter a starting cage between RC-001 and RC-999.";
+  if (start === null || start < 1 || start > 999) {
+    error.textContent = "Enter a starting cage between 001 and 999.";
+    return null;
+  }
+
+  if (!Number.isInteger(count) || count < 1 || count > 100 || start + count - 1 > 999) {
+    error.textContent = "Enter 1 to 100 labels, ending at cage 999 or earlier.";
+    return null;
+  }
+
+  if (typeof qrcode !== "function") {
+    error.textContent = "QR codes could not load. Check your connection and reload.";
+    return null;
+  }
+
+  error.textContent = "";
+  return Array.from({ length: count }, (_, index) => {
+    const cageId = cageLabelId(start + index);
+    return { cageId, url: cageDeepLink(cageId) };
+  });
+}
+
+function renderQrLabels() {
+  const labels = selectedQrLabels();
+  const output = $("qrLabelsGrid");
+
+  if (!labels) {
     output.innerHTML = "";
     return;
   }
 
-  error.textContent = "";
-  output.innerHTML = Array.from({ length: count }, (_, index) => {
-    const cageId = cageLabelId(start + index);
-    const url = cageDeepLink(cageId);
+  output.innerHTML = labels.map(({ cageId, url }) => {
     const qrImage = makeQrDataUrl(url);
 
     return `
@@ -57,4 +78,25 @@ function renderQrLabels() {
         <div class="qr-label-type">ROLL CAGE</div>
       </article>`;
   }).join("");
+}
+
+function downloadQrLabelsPdf() {
+  const labels = selectedQrLabels();
+  if (!labels) return;
+
+  try {
+    const pdf = FlowLabelPdf.create(labels);
+    const objectUrl = URL.createObjectURL(new Blob([pdf], { type: "application/pdf" }));
+    const link = document.createElement("a");
+    link.href = objectUrl;
+    link.download = `Flow-labels-${labels[0].cageId}-${labels[labels.length - 1].cageId}.pdf`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    setTimeout(() => URL.revokeObjectURL(objectUrl), 60000);
+    toast("PDF ready - print at Actual size / 100%");
+  } catch (error) {
+    console.error("Label PDF failed", error);
+    $("qrLabelsError").textContent = "The PDF could not be created. Please try again.";
+  }
 }

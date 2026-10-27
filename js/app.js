@@ -569,7 +569,7 @@ $("qrLabelsButton").addEventListener("click", () => {
 });
 $("qrLabelsBackButton").addEventListener("click", () => showView("lookupView"));
 $("generateQrLabelsButton").addEventListener("click", renderQrLabels);
-$("printQrLabelsButton").addEventListener("click", () => window.print());
+$("printQrLabelsButton").addEventListener("click", downloadQrLabelsPdf);
 let packedHoldTimer = null;
 let packedLongPressTriggered = false;
 const packedButton = $("packedButton");
