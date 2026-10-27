@@ -29,10 +29,10 @@ const FlowLabelPdf = {
         code.make();
 
         const count = code.getModuleCount();
-        const size = 32 * mm;
+        const size = 27 * mm;
         const unit = size / (count + 8);
-        const qrX = x + 2 * mm + 4 * unit;
-        const qrTop = top + 5 * mm + 4 * unit;
+        const qrX = x + (62 * mm - size) / 2 + 4 * unit;
+        const qrTop = top + 6 * mm + 4 * unit;
 
         // A four-module clear margin surrounds every QR code.
         for (let row = 0; row < count; row++) {
@@ -47,9 +47,14 @@ const FlowLabelPdf = {
           commands.push(`BT /${font} ${sizePt} Tf ${number(x + offsetX * mm)} ${number(pageHeight - top - baseline * mm)} Td (${value}) Tj ET`);
         };
 
-        text("FLOW", "F1", 9, 37, 11);
-        text("CAGE", "F2", 7, 37, 17);
-        text(label.cageId.slice(3), "F1", 29, 36, 28);
+        // Match the on-screen preview: brand, centred QR, modest ID, asset type.
+        // Standard Helvetica widths in em keep each fixed-format line centred.
+        const headerWidth = 2.944 * 7.5 + 3 + 1.612 * 5.5;
+        const headerX = (62 * mm - headerWidth) / 2;
+        text("FLOW", "F1", 7.5, headerX / mm, 5);
+        text("Lite", "F2", 5.5, (headerX + 2.944 * 7.5 + 3) / mm, 5);
+        text(label.cageId, "F1", 11, (62 * mm - 3.445 * 11) / (2 * mm), 36.5);
+        text("ROLL CAGE", "F2", 5.5, (62 * mm - 5.502 * 5.5) / (2 * mm), 39.5);
       });
 
       const stream = commands.join("\n") + "\n";
