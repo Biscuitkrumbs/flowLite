@@ -115,6 +115,9 @@ class FlowSync {
       this.accept(await FlowAPI.getData());
       this.persist();
       this.notify();
+      // A tap can arrive while the final read is in flight. Drain it before
+      // declaring the phone synced rather than waiting for the next refresh.
+      if (this.pending.length) return this.run();
       this.onStatus("Shared data up to date", "synced");
       return true;
     } catch (error) {
